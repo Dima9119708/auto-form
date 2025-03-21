@@ -26,7 +26,7 @@ const isChildrenPrimitive = computed(() => children[0].path === null)
         <div class="grid gap-2.5 relative">
             <div
                 v-if="disabled"
-                class="absolute inset-0 cursor-not-allowed bg-[hsl(var(--muted-foreground)/0.1)] rounded-sm"
+                class="absolute inset-0 cursor-not-allowed bg-[hsl(var(--muted-foreground)/0.09)] rounded-sm"
             />
             <slot name="label" />
 

@@ -16,15 +16,19 @@ const { path, isRequired, inputProps, disabled, field } = defineProps({
 </script>
 
 <template>
-    <div>
+    <div class="w-full">
         <slot name="label" />
 
-        <Input
-            :disabled
-            v-bind="{ ...field.field, ...inputProps }"
-            :model-value="field.value"
-            type="number"
-        />
+        <div class="flex gap-4">
+            <Input
+                :disabled
+                v-bind="{ ...field.field, ...inputProps }"
+                :model-value="field.value"
+                type="number"
+            />
+            <slot name="positionLeft" />
+        </div>
+
         <slot name="description" />
 
         <slot name="error" />

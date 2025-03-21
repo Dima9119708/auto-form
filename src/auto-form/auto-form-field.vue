@@ -2,12 +2,9 @@
 import AutoFormDescription from '@/auto-form/auto-form-description.vue'
 import AutoFormError from '@/auto-form/auto-form-error.vue'
 import AutoFormLabel from '@/auto-form/auto-form-label.vue'
-import { DEPENDENCY_TYPE } from '@/auto-form/constants.js'
-import { useDependencies } from '@/auto-form/use-dependencies.js'
-import { findByNestedFullPath, getFromPath } from '@/auto-form/utils.js'
-import { toTypedSchema } from '@vee-validate/zod'
-import { Field, useFieldValue, useFormValues } from 'vee-validate'
-import { computed, inject, ref, shallowRef, watch } from 'vue'
+import { useDependencies } from '@/auto-form/use-dependencies'
+import { Field } from 'vee-validate'
+import { computed } from 'vue'
 
 const {
     component,
@@ -64,57 +61,13 @@ const {
     },
 })
 
-const hide = ref(hideProp)
-const disabled = ref(disabledProp)
-const required = ref(requiredProp)
-const schema = shallowRef(schemaProp)
-const options = ref(optionsProp)
-
 useDependencies(path)
 
-watch(
-    () => hideProp,
-    (value) => {
-        hide.value = value.value
-    },
-    {
-        deep: true,
-        immediate: true,
-    }
-)
-
-watch(
-    () => disabledProp,
-    (value) => {
-        disabled.value = value.value
-    },
-    {
-        deep: true,
-        immediate: true,
-    }
-)
-
-watch(
-    () => requiredProp,
-    (value) => {
-        required.value = value.value
-    },
-    {
-        deep: true,
-        immediate: true,
-    }
-)
-
-watch(
-    () => optionsProp,
-    (value) => {
-        options.value = value.value
-    },
-    {
-        deep: true,
-        immediate: true,
-    }
-)
+const hide = computed(() => hideProp.value)
+const disabled = computed(() => disabledProp.value)
+const required = computed(() => requiredProp.value)
+const schema = computed(() => schemaProp.value)
+const options = computed(() => optionsProp.value)
 
 const defaultValue = computed(() => (typeof defaultValueProp === 'function' ? defaultValueProp() : undefined))
 
@@ -138,6 +91,9 @@ const rules = computed(() => {
             :is="component"
             v-bind="{ path, field: slotFieldProps, options, disabled, ...otherProps }"
         >
+            <template #positionLeft>
+                <slot name="positionLeft" />
+            </template>
             <template #label>
                 <AutoFormLabel
                     v-if="!hideLabel && label"

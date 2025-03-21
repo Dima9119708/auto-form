@@ -22,10 +22,10 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
-    dependencies: { type: Array, required: true },
+    dependencies: { type: Array, required: false, default: () => [] },
 })
 
-const emit = defineEmits('submit')
+const emit = defineEmits(['submit'])
 
 const normalizeSchema = computed(() => {
     const rootElement = getBaseSchema(props.schema)

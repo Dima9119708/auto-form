@@ -1,5 +1,4 @@
 <script setup="">
-import { Button } from '@/components/ui/button/index.js'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
@@ -24,19 +23,30 @@ const { inputProps, componentType, field, disabled } = defineProps({
 </script>
 
 <template>
-    <div>
+    <div class="w-full">
         <slot name="label" />
-        <Input
-            :disabled
+        <div
             v-if="componentType === 'input'"
-            v-bind="{ ...field.field, ...inputProps }"
-        />
-        <Textarea
+            class="flex gap-4"
+        >
+            <Input
+                :disabled
+                v-bind="{ ...field.field, ...inputProps }"
+            />
+            <slot name="positionLeft" />
+        </div>
+
+        <div
             v-else
-            :disabled
-            v-bind="{ ...field.field, ...inputProps }"
-            :model-value="field.value"
-        />
+            class="flex gap-4"
+        >
+            <Textarea
+                :disabled
+                v-bind="{ ...field.field, ...inputProps }"
+                :model-value="field.value"
+            />
+            <slot name="positionLeft" />
+        </div>
 
         <slot name="description" />
 

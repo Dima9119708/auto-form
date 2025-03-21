@@ -38,6 +38,7 @@ const { options, componentType, inputProps, field, disabled } = defineProps({
             @update-model-value="field.handleChange"
             :orientation="'vertical'"
         >
+            <slot name="label" />
             <div
                 v-for="option in options"
                 class="flex items-center space-x-2"
@@ -52,6 +53,7 @@ const { options, componentType, inputProps, field, disabled } = defineProps({
 
         <Select
             v-else
+            :disabled
             :model-value="field.value"
             @update:model-value="field.handleChange"
         >
