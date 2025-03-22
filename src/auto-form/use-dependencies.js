@@ -1,63 +1,32 @@
-import { DEPENDENCY_TYPE } from '@/auto-form/constants.js'
-import { findByNestedFullPath, getFromPath } from '@/auto-form/utils.js'
-import { toTypedSchema } from '@vee-validate/zod'
+import { DEPENDENCY_TYPE } from '@/auto-form/constants'
+import { getFromPath } from '@/auto-form/utils'
 import { useFormValues } from 'vee-validate'
-import { computed, inject, watch } from 'vue'
+import { computed, inject } from 'vue'
 
-export const useDependencies = (path) => {
+export const useDependencies = (path, defaultRequired, defaultSchema, defaultOptions) => {
     const dependencies = inject('DEPENDENCIES')
-    const normalizeSchema = inject('NORMALIZE_SCHEMA')
 
     const values = useFormValues()
 
-    const sourceDependencies = computed(() => dependencies.filter((dep) => dep.sourceField === path))
-
-    const targetDependencies = computed(() => {
-        const groupedDependencies = dependencies.reduce((acc, dep) => {
-            if (acc[dep.targetField]) {
-                acc[dep.targetField] = [...acc[dep.targetField], dep]
-            } else {
-                acc[dep.targetField] = [dep]
-            }
-            return acc
-        }, {})
-
-        return sourceDependencies.value.map((dep) => groupedDependencies[dep.targetField]).flat()
-    })
-
-    const normalizedTargetFields = computed(() =>
-        sourceDependencies.value.reduce((acc, dep) => {
-            acc[dep.targetField] = findByNestedFullPath(normalizeSchema.value, dep.targetField)
-
-            return acc
-        }, {})
-    )
+    const targetDependencies = computed(() => dependencies.filter((dep) => dep.targetField === path))
 
     const evaluatedConditions = computed(() => {
         return targetDependencies.value.reduce(
             (acc, dep) => {
                 const sourceValue = getFromPath(values.value, dep.sourceField)
 
-                if (!dep.immediate) {
-                    if (sourceValue === undefined) {
-                        return acc
-                    }
+                if (!dep.immediate && sourceValue === undefined) {
+                    return acc
                 }
 
-                switch (dep.type) {
-                    case DEPENDENCY_TYPE.HIDES:
-                        acc[DEPENDENCY_TYPE.HIDES] = dep.when(sourceValue)
-                        break
-                    case DEPENDENCY_TYPE.DISABLES:
-                        acc[DEPENDENCY_TYPE.DISABLES] = dep.when(sourceValue)
-                        break
-                    case DEPENDENCY_TYPE.REQUIRES:
-                        acc[DEPENDENCY_TYPE.REQUIRES] = dep.when(sourceValue)
-                        break
-                    case DEPENDENCY_TYPE.SETS_OPTIONS:
-                        const targetValue = getFromPath(values.value, dep.targetField)
-                        acc[DEPENDENCY_TYPE.SETS_OPTIONS] = dep.when(sourceValue, targetValue)
-                        break
+                if (dep.type === DEPENDENCY_TYPE.HIDES) {
+                    acc[dep.type] = acc[dep.type] || dep.when(sourceValue)
+                } else if (dep.type === DEPENDENCY_TYPE.DISABLES) {
+                    acc[dep.type] = acc[dep.type] || dep.when(sourceValue)
+                } else if (dep.type === DEPENDENCY_TYPE.REQUIRES) {
+                    acc[dep.type].push({ when: dep.when(sourceValue), schema: dep.schema })
+                } else if (dep.type === DEPENDENCY_TYPE.SETS_OPTIONS) {
+                    acc[dep.type].push({ when: dep.when(sourceValue), options: dep.options })
                 }
 
                 return acc
@@ -65,88 +34,50 @@ export const useDependencies = (path) => {
             {
                 [DEPENDENCY_TYPE.HIDES]: false,
                 [DEPENDENCY_TYPE.DISABLES]: false,
-                [DEPENDENCY_TYPE.REQUIRES]: false,
-                [DEPENDENCY_TYPE.SETS_OPTIONS]: false,
+                [DEPENDENCY_TYPE.REQUIRES]: [],
+                [DEPENDENCY_TYPE.SETS_OPTIONS]: [],
             }
         )
     })
 
-    watch(
-        () => evaluatedConditions.value[DEPENDENCY_TYPE.HIDES],
-        (when) => {
-            sourceDependencies.value
-                .filter((dep) => dep.type === DEPENDENCY_TYPE.HIDES)
-                .forEach((dep) => {
-                    const findNormalizedField = normalizedTargetFields.value[dep.targetField]
+    const hide = computed(() => evaluatedConditions.value[DEPENDENCY_TYPE.HIDES])
+    const disabled = computed(() => evaluatedConditions.value[DEPENDENCY_TYPE.DISABLES])
 
-                    findNormalizedField.hide.value = when
-                })
-        },
-        {
-            immediate: true,
+    const overrideRequiredAndSchema = computed(() => {
+        const requires = evaluatedConditions.value[DEPENDENCY_TYPE.REQUIRES]
+
+        const activeRequire = requires.find((req) => req.when)
+
+        if (activeRequire) {
+            console.log('activeRequire =>', activeRequire)
+            return {
+                required: true,
+                schema: activeRequire.schema,
+            }
+        } else {
+            return {
+                required: defaultRequired,
+                schema: defaultSchema,
+            }
         }
-    )
+    })
 
-    watch(
-        () => evaluatedConditions.value[DEPENDENCY_TYPE.DISABLES],
-        (when) => {
-            sourceDependencies.value
-                .filter((dep) => dep.type === DEPENDENCY_TYPE.DISABLES)
-                .forEach((dep) => {
-                    const findNormalizedField = normalizedTargetFields.value[dep.targetField]
+    const overrideOptions = computed(() => {
+        const setsOptions = evaluatedConditions.value[DEPENDENCY_TYPE.SETS_OPTIONS]
 
-                    findNormalizedField.disabled.value = when
-                    findNormalizedField.required.value = !when
-                })
-        },
-        {
-            immediate: true,
+        const activeSetsOptions = setsOptions.find((so) => so.when)
+
+        if (activeSetsOptions) {
+            return activeSetsOptions.options
+        } else {
+            return defaultOptions
         }
-    )
+    })
 
-    watch(
-        () => evaluatedConditions.value[DEPENDENCY_TYPE.REQUIRES],
-        (when) => {
-            sourceDependencies.value
-                .filter((dep) => dep.type === DEPENDENCY_TYPE.REQUIRES)
-                .forEach((dep) => {
-                    const findNormalizedField = normalizedTargetFields.value[dep.targetField]
-
-                    findNormalizedField.required.value = when
-
-                    if (!('schema' in dep)) {
-                        console.error("The 'schema' field in the 'DEPENDENCIES' array must contain a validation schema.")
-                    } else {
-                        if (when) {
-                            findNormalizedField.schema.value = toTypedSchema(dep.schema)
-                        } else {
-                            findNormalizedField.schema.value = findNormalizedField.defaultSchema
-                        }
-                    }
-                })
-        },
-        {
-            immediate: true,
-        }
-    )
-
-    watch(
-        () => evaluatedConditions.value[DEPENDENCY_TYPE.SETS_OPTIONS],
-        (when) => {
-            sourceDependencies.value
-                .filter((dep) => dep.type === DEPENDENCY_TYPE.SETS_OPTIONS)
-                .forEach((dep) => {
-                    const findNormalizedField = normalizedTargetFields.value[dep.targetField]
-
-                    if (when) {
-                        findNormalizedField.options.value = dep.options
-                    } else {
-                        findNormalizedField.options.value = findNormalizedField.defaultOptions
-                    }
-                })
-        },
-        {
-            immediate: true,
-        }
-    )
+    return {
+        hide,
+        disabled,
+        overrideRequiredAndSchema,
+        overrideOptions,
+    }
 }

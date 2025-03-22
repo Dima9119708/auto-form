@@ -35,7 +35,7 @@ const { options, componentType, inputProps, field, disabled } = defineProps({
             :disabled
             v-if="componentType === 'radio'"
             :model-value="field.value"
-            @update-model-value="field.handleChange"
+            @update:modelValue="field.handleChange"
             :orientation="'vertical'"
         >
             <slot name="label" />
@@ -45,7 +45,7 @@ const { options, componentType, inputProps, field, disabled } = defineProps({
             >
                 <RadioGroupItem
                     :id="option"
-                    :value="{ option }"
+                    :value="option"
                 />
                 <Label :for="option">{{ beautifyObjectName(option) }}</Label>
             </div>

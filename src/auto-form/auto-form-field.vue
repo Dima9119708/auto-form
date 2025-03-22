@@ -3,6 +3,7 @@ import AutoFormDescription from '@/auto-form/auto-form-description.vue'
 import AutoFormError from '@/auto-form/auto-form-error.vue'
 import AutoFormLabel from '@/auto-form/auto-form-label.vue'
 import { useDependencies } from '@/auto-form/use-dependencies'
+import { toTypedSchema } from '@vee-validate/zod'
 import { Field } from 'vee-validate'
 import { computed } from 'vue'
 
@@ -12,10 +13,8 @@ const {
     isRequired,
     description,
     hideLabel,
-    hide: hideProp,
     path,
     defaultValue: defaultValueProp,
-    disabled: disabledProp,
     required: requiredProp,
     schema: schemaProp,
     options: optionsProp,
@@ -52,30 +51,22 @@ const {
         type: Object,
         required: false,
     },
-    hide: Object,
-    disabled: Object,
-    required: Object,
+    required: Boolean,
     schema: {
         type: Object,
         required: false,
     },
 })
 
-useDependencies(path)
-
-const hide = computed(() => hideProp.value)
-const disabled = computed(() => disabledProp.value)
-const required = computed(() => requiredProp.value)
-const schema = computed(() => schemaProp.value)
-const options = computed(() => optionsProp.value)
+const { disabled, hide, overrideOptions, overrideRequiredAndSchema } = useDependencies(path, requiredProp, schemaProp, optionsProp)
 
 const defaultValue = computed(() => (typeof defaultValueProp === 'function' ? defaultValueProp() : undefined))
 
 const rules = computed(() => {
     if (disabled.value) return undefined
-    if (!required.value) return undefined
+    if (!overrideRequiredAndSchema.value.required) return undefined
 
-    return schema.value
+    return toTypedSchema(overrideRequiredAndSchema.value.schema)
 })
 </script>
 
@@ -89,7 +80,7 @@ const rules = computed(() => {
     >
         <component
             :is="component"
-            v-bind="{ path, field: slotFieldProps, options, disabled, ...otherProps }"
+            v-bind="{ path, field: slotFieldProps, options: overrideOptions, disabled, ...otherProps }"
         >
             <template #positionLeft>
                 <slot name="positionLeft" />
@@ -98,7 +89,7 @@ const rules = computed(() => {
                 <AutoFormLabel
                     v-if="!hideLabel && label"
                     :is-error="!!slotFieldProps.errorMessage"
-                    :isRequired="required"
+                    :isRequired="!disabled && overrideRequiredAndSchema.required"
                     :disabled
                 >
                     {{ label }}

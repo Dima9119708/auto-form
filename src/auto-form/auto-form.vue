@@ -41,7 +41,6 @@ const normalizeSchema = computed(() => {
         const resolvedComponent = isObject(inputComponent) ? inputComponent : FIELD_COMPONENTS_MAP[inputComponent]
 
         const isOptional = getOptionalInZodStack(field)
-        const schema = toTypedSchema(baseSchema)
 
         const node = {
             path: path,
@@ -50,14 +49,11 @@ const normalizeSchema = computed(() => {
             hideLabel: typeof fieldConfig?.hideLabel === 'boolean' ? fieldConfig.hideLabel : false,
             description: fieldConfig?.description,
             defaultValue: getDefaultValueInZodStack(field),
-            hide: ref(false),
-            disabled: ref(false),
-            required: ref(!isOptional),
+            required: !isOptional,
             componentType: isObject(inputComponent) ? '' : inputComponent,
             component: resolvedComponent,
-            schema: shallowRef(schema),
-            defaultSchema: schema,
-            ...(baseSchema._def && 'values' && { defaultOptions: baseSchema._def.values, options: ref(baseSchema._def.values) }),
+            schema: baseSchema,
+            ...(baseSchema._def && 'values' && { options: baseSchema._def.values }),
             ...(fieldConfig && 'inputProps' in fieldConfig && { inputProps: fieldConfig.inputProps }),
         }
 

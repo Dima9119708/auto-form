@@ -6,10 +6,11 @@ import FormSM from '@/examples/form-sm.vue'
 import FormXL2 from '@/examples/form-xl2.vue'
 import FormXL3 from '@/examples/form-xl3.vue'
 import FormXL4 from '@/examples/form-xl4.vue'
+import FormXL5 from '@/examples/form-xl5.vue'
 import FormXL from '@/examples/form-xl.vue'
 import FormXS from '@/examples/form-xs.vue'
 
-const examples = [FormXS, FormSM, FormBASE, FormLARGE, FormXL, FormXL2, FormXL3, FormXL4]
+const examples = [FormXS, FormSM, FormBASE, FormLARGE, FormXL, FormXL2, FormXL3, FormXL4, FormXL5]
 </script>
 
 <template>

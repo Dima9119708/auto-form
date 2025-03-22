@@ -11,14 +11,16 @@ const schema = z.object({
     cpu: z.enum(['Intel Core i9', 'Intel Core i7', 'Intel Core i5']).describe('CPU'),
     ram: z.enum(['32 GB', '16 GB', '8 GB']).describe('RAM'),
     disks: z.enum(['1 TB', '2 TB', '4 TB']).describe('Disks'),
-    additionalNetworkInterfaceCards: z.array(
-        z.enum([
-            '2 × 1 GE + port to Internet 1 Gbit/s',
-            '2 × 1 GE + port to Internet 10 Gbit/s',
-            '4 × 1 GE + port to Internet 10 Gbit/s',
-            '4 × 1 GE + port to Internet 100 Gbit/s',
-        ])
-    ),
+    additionalNetworkInterfaceCards: z
+        .array(
+            z.enum([
+                '2 × 1 GE + port to Internet 1 Gbit/s',
+                '2 × 1 GE + port to Internet 10 Gbit/s',
+                '4 × 1 GE + port to Internet 10 Gbit/s',
+                '4 × 1 GE + port to Internet 100 Gbit/s',
+            ])
+        )
+        .optional(),
     pciECards: z.array(z.enum(['Dallas Lock PCI-E Trusted Boot Module', 'Sobol PCI-E Trusted Boot Module'])),
     motherboard: z.enum(['Asus RS700A-E11-RS4U MB', 'Asus RS720A-E11-RS12 MB']).describe('Motherboard'),
     case: z.enum(['1U, 2 power supplies', '2U, 4 power supplies', '4U, 8 power supplies']).describe('Case'),
