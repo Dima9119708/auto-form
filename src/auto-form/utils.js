@@ -54,38 +54,6 @@ export function isArrayOfObjects(schema) {
     return schema._def?.type?._def?.typeName === ZOD_TYPES.ZodObject
 }
 
-export function findByNestedFullPath(array, path) {
-    const pathParts = path.split('.')
-
-    function traverse(currentArray, parts, index = 0) {
-        if (index >= parts.length || !currentArray) {
-            return undefined
-        }
-
-        const expectedFullPath = pathParts.slice(0, index + 1).join('.')
-
-        const target = currentArray.find(
-            (item) => item && typeof item === 'object' && 'fullPath' in item && item.fullPath === expectedFullPath
-        )
-
-        if (!target) {
-            return undefined
-        }
-
-        if (index === parts.length - 1) {
-            return target
-        }
-
-        if (Array.isArray(target.children)) {
-            return traverse(target.children, parts, index + 1)
-        }
-
-        return undefined
-    }
-
-    return traverse(array, pathParts)
-}
-
 function isNotNestedPath(path) {
     return /^\[.+\]$/.test(path)
 }
