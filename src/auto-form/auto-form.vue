@@ -85,7 +85,6 @@ const normalizeSchema = computed(() => {
 })
 
 provide('DEPENDENCIES', props.dependencies)
-provide('NORMALIZE_SCHEMA', normalizeSchema)
 
 const submit = (values) => {
     emit('submit', values)
